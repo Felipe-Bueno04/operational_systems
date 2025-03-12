@@ -15,10 +15,12 @@ public class SortingThreadsManager {
 
     private List<Integer> slicedSortedArrays;
 
-    private final Map<SortingEnum, SortingTask> algorithmsDictionary = new HashMap<SortingEnum, SortingTask>() {{
-        put(SortingEnum.Bubble, new BubbleSortTask());
-        put(SortingEnum.Quick, new QuickSortTask());
-    }};
+    private final Map<SortingEnum, SortingTask> algorithmsDictionary = new HashMap<SortingEnum, SortingTask>() {
+        {
+            put(SortingEnum.Bubble, new BubbleSortTask());
+            put(SortingEnum.Quick, new QuickSortTask());
+        }
+    };
 
     public SortingThreadsManager(int threadNumber, List<SortingEnum> algorithms, int arrayLength) {
         this.threadNumber = threadNumber;
@@ -35,19 +37,22 @@ public class SortingThreadsManager {
         int end = (index + 1) * (arrayLength / threadNumber);
         int[] slicedArray = Arrays.copyOfRange(originalArray, start, end);
         int[] sortedSlicedArray = task.compute(slicedArray);
+        String stringArray = Arrays.toString(this.capArray(sortedSlicedArray, 100));
 
         long endTime = System.nanoTime();
-        long durationMs = (endTime - startTime) / 1_000_000;
-        String stringArray = Arrays.toString(sortedSlicedArray);
+        long durationMs = (endTime - startTime);
         System.out.println(
-            "Thread " + index +
-            "\n algorithm: " + algorithm +
-            "\n time:" + durationMs + "ms" +
-            "\n sorted Array: " +
-            stringArray
-        );
+                "Thread " + index +
+                        "\n algorithm: " + algorithm +
+                        "\n time:" + durationMs + "ms" +
+                        "\n sorted Array: " +
+                        stringArray);
 
         return;
+    }
+
+    private int[] capArray(int[] arrayToCap, int maxQuantity) {
+        return Arrays.copyOfRange(arrayToCap, 0, Math.min(arrayToCap.length, maxQuantity));
     }
 
     public void startComputing() {
@@ -55,7 +60,7 @@ public class SortingThreadsManager {
 
         System.out.println(Arrays.toString(array));
         ExecutorService executorService = Executors.newFixedThreadPool(threadNumber);
-        
+
         for (int i = 0; i < threadNumber; i++) {
             final int index = i;
             executorService.execute(new Runnable() {
@@ -67,7 +72,7 @@ public class SortingThreadsManager {
 
         executorService.shutdown();
 
-        while(!executorService.isTerminated()) {
+        while (!executorService.isTerminated()) {
 
         }
     }
