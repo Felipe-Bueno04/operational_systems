@@ -1,48 +1,27 @@
 public class Main {
-
     public static void main(String[] args) throws InterruptedException {
-        final Account a = new Account(1, 300);
-        final Account b = new Account(2, 300);
-        final Account c = new Account(3, 300);
+        Account a = new Account(1, 300);
+        Account b = new Account(2, 300);
+        Account c = new Account(3, 300);
 
-        Thread T1 = new Thread(() -> {
-            try {
-                Account.transfer(a, b, 150);
-                
-                System.out.println("T1 - A: " + a.balance);
-                System.out.println("T1 - B: " + b.balance);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }, "T1");
-        
-        Thread T2 = new Thread(() -> {
-            try {
-                Account.transfer(b, c, 150);
+        ResourceManager manager = new ResourceManager();
 
-                System.out.println("T2 - A: " + a.balance);
-                System.out.println("T2 - B: " + b.balance);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }, "T2");
-        
-        Thread T3 = new Thread(() -> {
-            try {
-                Account.transfer(c, a, 150);
+        Process p1 = new Process(1, a, b, 150, manager);
+        Process p2 = new Process(2, b, c, 150, manager);
+        Process p3 = new Process(3, c, a, 150, manager); // Cria a dependencia circular
 
-                System.out.println("T3 - A: " + a.balance);
-                System.out.println("T3 - B: " + b.balance);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }, "T3");
+        Thread t1 = new Thread(p1);
+        Thread t2 = new Thread(p2);
+        Thread t3 = new Thread(p3);
 
-        T1.start();
-        T2.start();
-        T3.start();
-        T1.join();
-        T2.join();
-        T3.join();
-    }    
+        t1.start();
+        t2.start();
+        t3.start();
+
+        t1.join();
+        t2.join();
+        t3.join();
+
+        System.out.println("All processes completed.");
+    }
 }
