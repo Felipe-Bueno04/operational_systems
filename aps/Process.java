@@ -21,27 +21,28 @@ public class Process implements Runnable {
     try {
       manager.registerProcess(this, from, to);
 
-      System.out.println("Process " + processId + " attempting transfer from " + from.id + " to " + to.id);
+      System.out.println("Processo " + processId + " tentando transferir de " + from.id + " para " + to.id);
 
       if (!from.lock.tryLock(2, TimeUnit.SECONDS)) {
-        System.out.println("Process " + processId + " - Could not lock Account " + from.id);
-        return;
-      }
-      if (!to.lock.tryLock(2, TimeUnit.SECONDS)) {
-        System.out.println("Process " + processId + " - Could not lock Account " + to.id);
-        from.lock.unlock(); // Release first lock
+        System.out.println("Processo " + processId + " - Não conseguiu acessar a conta " + from.id + "(já em uso)");
         return;
       }
 
-      // Execute transfer
+      Thread.sleep(100);
+      if (!to.lock.tryLock(2, TimeUnit.SECONDS)) {
+        System.out.println("Processo " + processId + " - Não conseguiu acessar a conta " + to.id + "(já em uso)");
+        from.lock.unlock(); // Se não conseguir acessar a segunda conta então libera o lock da primeira e retorna.
+        return;
+      }
+
+      // Exeuta a transmissão
       from.withdraw(amount);
       to.deposit(amount);
-      System.out.println("Process " + processId + " completed transfer!");
+      System.out.println("Processo " + processId + " Transferência completa!");
 
     } catch (InterruptedException e) {
-      System.out.println("Process " + processId + " was killed due to deadlock.");
+      System.out.println("Processo " + processId + " fechou um deadlock!");
     } finally {
-      // 🔥 Fixed unlocking logic 🔥
       if (from.lock instanceof ReentrantLock && ((ReentrantLock) from.lock).isHeldByCurrentThread()) {
         from.lock.unlock();
       }

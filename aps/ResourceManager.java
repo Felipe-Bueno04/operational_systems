@@ -3,18 +3,18 @@ import java.util.*;
 public class ResourceManager {
   private final Map<Process, List<Account>> processMap = new HashMap<>();
 
-  // Register process dependencies
+  // Método para registrar processo.
   public synchronized void registerProcess(Process process, Account from, Account to) {
     processMap.put(process, Arrays.asList(from, to));
     checkForDeadlock();
   }
 
-  // Remove a process after it completes
+  // Método para remover processo.
   public synchronized void removeProcess(Process process) {
     processMap.remove(process);
   }
 
-  // Detect and resolve deadlocks
+  // Detecta os deadlocks
   private synchronized void checkForDeadlock() {
     Set<Process> visited = new HashSet<>();
     Set<Process> stack = new HashSet<>();
@@ -23,14 +23,24 @@ public class ResourceManager {
       if (detectCycle(process, visited, stack)) {
         System.out.println("Deadlock detected! Terminating process " + process.getProcessId());
         terminateProcess(process);
-        break; // Only kill one process per cycle detection
+        break;
       }
     }
   }
 
+  /**
+   * É um método recursivo que tenta detectar alguma
+   * dependência ciclica no grafo de processos atual.
+   *
+   * @param process Processo da iteração atual.
+   * @param visited Processos já visitados nas iterações anteriores.
+   * @param stack Pilha de processos.
+   * @return Se há ou não uma dependência circular.
+   */
+  // Detecta se tem dependencia ciclica
   private boolean detectCycle(Process process, Set<Process> visited, Set<Process> stack) {
     if (stack.contains(process)) {
-      return true; // Cycle detected
+      return true;
     }
     if (visited.contains(process)) {
       return false;
@@ -51,8 +61,12 @@ public class ResourceManager {
     return false;
   }
 
+  /**
+   * Mata o processo.
+   * @param process Refer"encia do processo
+   */
   private void terminateProcess(Process process) {
     processMap.remove(process);
-    Thread.currentThread().interrupt(); // Simulate killing process
+    Thread.currentThread().interrupt();
   }
 }
