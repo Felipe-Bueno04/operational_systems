@@ -1,4 +1,6 @@
-public class Main {
+package com.aps;
+
+public class App {
     public static void main(String[] args) throws InterruptedException {
         Conta a = new Conta(1, 300);
         Conta b = new Conta(2, 300);
@@ -20,7 +22,7 @@ public class Main {
 
         Thread monitor = new Thread(() -> {
             try {
-                gerenciador.verificarDeadlockEmLoop(10000);
+                gerenciador.verificarDeadlockEmLoop(5000);
             } catch (InterruptedException e) {
                 System.out.println("Monitor encerrado.");
             }

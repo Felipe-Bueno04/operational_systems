@@ -1,3 +1,5 @@
+package com.aps;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,9 +33,11 @@ public class GerenciadorRecursos {
       Processo p = verificarDeadlock();
       if (p != null) {
         System.out.println("Deadlock detectado! Interrompendo processo " + p.getId());
+
         Thread t = mapaProcessos.get(p);
         if (t != null)
           t.interrupt();
+          System.out.println(t.isInterrupted());
       }
     }
   }

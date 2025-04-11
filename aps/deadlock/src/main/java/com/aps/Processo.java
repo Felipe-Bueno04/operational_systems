@@ -1,4 +1,4 @@
-import java.util.concurrent.TimeUnit;
+package com.aps;
 
 public class Processo extends NoGrafo implements Runnable {
   private int id;
@@ -18,24 +18,30 @@ public class Processo extends NoGrafo implements Runnable {
   @Override
   public void run() {
     try {
-      System.out.println("Processo " + id + " tentando transferir de " + origem.id + " para " + destino.id);
-
+      System.out.println("Processo " + id + " solicita recurso " + origem.id);
       gerenciador.solicitarRecurso(this, origem);
-      origem.lock.lock();
+      
+      Thread.sleep(2000);
+      origem.lock.lockInterruptibly();
+
+      System.out.println("Processo " + id + " adquire recurso " + origem.id);
       gerenciador.adquirirRecurso(this, origem);
+      Thread.sleep(2000);
 
-      Thread.sleep(100);
+      System.out.println("Processo " + id + " solicita recurso " + destino.id);
+      gerenciador.solicitarRecurso(this, destino);      
+      Thread.sleep(2000);
 
-      gerenciador.solicitarRecurso(this, destino);
-      origem.lock.lock();
+      destino.lock.lockInterruptibly();
+      System.out.println("Processo " + id + " adquire recurso " + destino.id);
       gerenciador.adquirirRecurso(this, destino);
 
       origem.sacar(valor);
       destino.depositar(valor);
       System.out.println("Processo " + id + " transferência concluída!");
 
-    } catch (InterruptedException e) {
-      System.out.println("Processo " + id + " interrompido devido a deadlock!");
+    } catch (Exception e) {
+      System.out.println("Processo " + id + " interrompido devido a `deadlock`!");
     } finally {
       if (origem.lock.isHeldByCurrentThread()) {
         origem.lock.unlock();
