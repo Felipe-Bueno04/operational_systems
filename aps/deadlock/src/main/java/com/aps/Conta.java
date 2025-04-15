@@ -22,6 +22,6 @@ public class Conta extends NoGrafo {
 
     @Override
     public String getIdentificador() {
-        return "C" + id;
+        return "R" + id;
     }
 }

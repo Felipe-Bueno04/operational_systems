@@ -1,5 +1,6 @@
 package com.aps;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -33,11 +34,11 @@ public class GerenciadorRecursos {
       Processo p = verificarDeadlock();
       if (p != null) {
         System.out.println("Deadlock detectado! Interrompendo processo " + p.getId());
+        this.desenharGrafo();
 
         Thread t = mapaProcessos.get(p);
         if (t != null)
           t.interrupt();
-          System.out.println(t.isInterrupted());
       }
     }
   }
@@ -70,5 +71,15 @@ public class GerenciadorRecursos {
     }
     emPilha.remove(id);
     return false;
+  }
+
+  public void desenharGrafo() {
+    System.out.println("O grafo do deadlock foi salvo em /visualizacao-deadlock/grafo.png");
+    try {
+      GraphPrinter.printGraphClustered(this.grafo);
+    } catch (IOException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 }

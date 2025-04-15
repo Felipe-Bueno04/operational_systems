@@ -22,7 +22,7 @@ public class App {
 
         Thread monitor = new Thread(() -> {
             try {
-                gerenciador.verificarDeadlockEmLoop(5000);
+                gerenciador.verificarDeadlockEmLoop(1000);
             } catch (InterruptedException e) {
                 System.out.println("Monitor encerrado.");
             }
