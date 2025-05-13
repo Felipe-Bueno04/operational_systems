@@ -36,9 +36,38 @@ public class GerenciadorRecursos {
         System.out.println("Deadlock detectado! Interrompendo processo " + p.getId());
         this.desenharGrafo();
 
-        Thread t = mapaProcessos.get(p);
+        this.interromperProcessosEnvolvidos(p);
+      }
+    }
+  }
+
+
+  private void interromperProcessosEnvolvidos(NoGrafo no) {
+    Set<NoGrafo> nosEnvolvidos = this.trazerNosVizinhos(no, new HashSet<>());
+
+    this.interromperVariosProcessos(
+      nosEnvolvidos
+    );
+  }
+
+  private Set<NoGrafo> trazerNosVizinhos(NoGrafo no, Set<NoGrafo> visitados) {
+    visitados.add(no);   
+    for (NoGrafo vizinho : grafo.getOrDefault(no, Collections.emptySet())) {
+      if (visitados.contains(vizinho)) continue;
+      this.trazerNosVizinhos(vizinho, visitados);
+    }
+
+    return visitados;
+  }
+
+
+  private void interromperVariosProcessos(Set<NoGrafo> nos) {
+    for (NoGrafo no : nos) {
+      if (no instanceof Processo) {
+        Thread t = mapaProcessos.get(no);
         if (t != null)
           t.interrupt();
+        this.grafo.remove(no);
       }
     }
   }
