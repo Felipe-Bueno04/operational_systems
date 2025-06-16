@@ -1,0 +1,12 @@
+com\aps\Conta.class
+com\aps\Processo.class
+com\aps\GerenciadorRecursos.class
+com\aps\NoGrafo.class
+com\aps\App.class
+com\aps\ConsoleView.class
+com\aps\GerenciadorDisco$Bloco.class
+com\aps\ProcessoDesfragmentacao.class
+com\aps\GerenciadorDisco.class
+com\aps\GerenciadorRAM.class
+com\aps\GraphPrinter.class
+com\aps\InstanciadorProcessos.class

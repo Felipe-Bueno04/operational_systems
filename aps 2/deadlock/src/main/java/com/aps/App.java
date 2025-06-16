@@ -1,59 +1,59 @@
 package com.aps;
 
+import java.util.List;
+
 public class App {
     public static void main(String[] args) throws InterruptedException {
-        Conta a = new Conta(1, 300);
-        Conta b = new Conta(2, 300);
-        Conta c = new Conta(3, 300);
-        Conta d = new Conta(4, 300);
+        int tempoExecucao = 30000;
+        int discoTamanho = 200;
+        int ramTamanho = 2000;
 
-        Conta e = new Conta(5, 300);
-        Conta f = new Conta(6, 300);
+        List<Conta> contas = List.of(
+                new Conta(1, 1000),
+                new Conta(2, 1000),
+                new Conta(3, 1000),
+                new Conta(4, 1000),
+                new Conta(5, 1000),
+                new Conta(6, 1000),
+                new Conta(7, 1000),
+                new Conta(8, 1000),
+                new Conta(9, 1000),
+                new Conta(10, 1000));
 
-        GerenciadorRecursos gerenciador = new GerenciadorRecursos();
+        GerenciadorDisco disco = new GerenciadorDisco(discoTamanho);
+        GerenciadorRAM ram = new GerenciadorRAM(ramTamanho);
+        GerenciadorRecursos gr = new GerenciadorRecursos(disco, ram);
+        ConsoleView console = new ConsoleView();
 
-        Processo p1 = new Processo(1, a, b, 150, gerenciador);
-        Processo p2 = new Processo(2, c, d, 150, gerenciador);
+        long fim = System.currentTimeMillis() + tempoExecucao;
 
-        Processo p4 = new Processo(4, e, f, 150, gerenciador);
-        Processo p5 = new Processo(5, f, e, 150, gerenciador); // cria deadlock circular
+        while (System.currentTimeMillis() < fim) {
+            System.out.println("oi");
+            Processo p = InstanciadorProcessos.criar(contas, gr);
+            gr.adicionarNo(p);
+            new Thread(p).start();
 
-        Thread t1 = new Thread(p1);
-        Thread t2 = new Thread(p2);
+            console.adicionarLog(
+                    p.getNome() + " - RAM: " + p.getRamMb() + "MB | HD: " + p.getTamanhoMb() + "MB | Executando...");
 
-        Thread t4 = new Thread(p4);
-        Thread t5 = new Thread(p5);
-
-        gerenciador.registrarProcesso(p1, t1);
-        gerenciador.registrarProcesso(p2, t2);
-    
-        gerenciador.registrarProcesso(p4, t4);
-        gerenciador.registrarProcesso(p5, t5);
-
-        Thread monitor = new Thread(() -> {
-            try {
-                gerenciador.verificarDeadlockEmLoop(1000);
-            } catch (InterruptedException error) {
-                System.out.println("Monitor encerrado.");
+            if (disco.getTaxaFragmentacao() > 0.10 && ram.getDisponivel() >= 500) {
+                ProcessoDesfragmentacao desfrag = new ProcessoDesfragmentacao(disco, ram, gr);
+                new Thread(desfrag).start();
+                console.adicionarLog("[SISTEMA] Iniciando desfragmentação...");
             }
-        });
 
-        monitor.start();
-        t1.start();
-        t2.start();
-    
-        t4.start();
-        t5.start();
+            StringBuilder visualDisco = new StringBuilder();
+            for (int i = 0; i < disco.getTotalMb(); i++) {
+                String id = disco.getIdDoBloco(i);
+                visualDisco
+                        .append(String.format("[%s]", id == null ? "  " : id));
+            }
+            console.atualizarDisco(visualDisco.toString(), 30);
+            console.renderizar();
 
-        t1.join();
-        t2.join();
-    
-        t4.join();
-        t5.join();
+            Thread.sleep(1000);
+        }
 
-        monitor.interrupt();
-        monitor.join();
-
-        System.out.println("Todos os processos foram finalizados.");
+        System.out.println("Simulação encerrada.");
     }
 }

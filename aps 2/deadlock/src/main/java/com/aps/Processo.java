@@ -1,65 +1,57 @@
 package com.aps;
 
 public class Processo extends NoGrafo implements Runnable {
-  private int id;
+  private final String id;
   private Conta origem;
   private Conta destino;
-  private double valor;
   private GerenciadorRecursos gerenciador;
+  private int tamanhoMb;
+  private int ramMb;
+  private int duracaoMs;
 
-  public Processo(int id, Conta origem, Conta destino, double valor, GerenciadorRecursos gerenciador) {
+  public Processo(String id, Conta origem, Conta destino, int tamanhoMb, int ramMb, int duracaoMs,
+      GerenciadorRecursos gr) {
     this.id = id;
     this.origem = origem;
     this.destino = destino;
-    this.valor = valor;
-    this.gerenciador = gerenciador;
+    this.tamanhoMb = tamanhoMb;
+    this.ramMb = ramMb;
+    this.duracaoMs = duracaoMs;
+    this.gerenciador = gr;
   }
 
   @Override
   public void run() {
     try {
-      System.out.println("Processo " + id + " solicita recurso " + origem.id);
-      gerenciador.solicitarRecurso(this, origem);
-      
-      Thread.sleep(2000);
-      origem.lock.lockInterruptibly();
+      if (!gerenciador.iniciarExecucao(this, origem, destino, tamanhoMb, ramMb)) {
+        System.out.println("Não foi possível iniciar execução do processo " + this.getIdentificador());
+      }
 
-      System.out.println("Processo " + id + " adquire recurso " + origem.id);
-      gerenciador.adquirirRecurso(this, origem);
-      Thread.sleep(2000);
+      origem.saldo -= 10;
+      destino.saldo += 10;
+      Thread.sleep(duracaoMs);
 
-      System.out.println("Processo " + id + " solicita recurso " + destino.id);
-      gerenciador.solicitarRecurso(this, destino);      
-      Thread.sleep(2000);
-
-      destino.lock.lockInterruptibly();
-      System.out.println("Processo " + id + " adquire recurso " + destino.id);
-      gerenciador.adquirirRecurso(this, destino);
-
-      origem.sacar(valor);
-      destino.depositar(valor);
-      System.out.println("Processo " + id + " transferência concluída!");
-
-    } catch (Exception e) {
-      System.out.println("Processo " + id + " interrompido devido a `deadlock`!");
+    } catch (InterruptedException e) {
+      System.out.println("Processo " + id + " interrompido devido a deadlock!");
     } finally {
-      if (origem.lock.isHeldByCurrentThread()) {
-        origem.lock.unlock();
-        gerenciador.liberarRecurso(this, origem);
-      }
-      if (destino.lock.isHeldByCurrentThread()) {
-        destino.lock.unlock();
-        gerenciador.liberarRecurso(this, destino);
-      }
+      gerenciador.finalizarExecucao(this, origem, destino, tamanhoMb, ramMb);
     }
+  }
+
+  public int getTamanhoMb() {
+    return tamanhoMb;
+  }
+
+  public int getRamMb() {
+    return ramMb;
+  }
+
+  public String getNome() {
+    return id;
   }
 
   @Override
   public String getIdentificador() {
-    return "P" + id;
-  }
-
-  public int getId() {
     return id;
   }
 }

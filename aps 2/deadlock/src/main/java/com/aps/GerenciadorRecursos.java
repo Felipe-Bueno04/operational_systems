@@ -7,6 +7,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GerenciadorRecursos {
   private final Map<NoGrafo, Set<NoGrafo>> grafo = new ConcurrentHashMap<>();
   private final Map<Processo, Thread> mapaProcessos = new ConcurrentHashMap<>();
+  private final GerenciadorDisco disco;
+  private final GerenciadorRAM ram;
+
+  public GerenciadorRecursos(GerenciadorDisco disco, GerenciadorRAM ram) {
+    this.disco = disco;
+    this.ram = ram;
+  }
 
   public void registrarProcesso(Processo p, Thread t) {
     mapaProcessos.put(p, t);
@@ -33,7 +40,7 @@ public class GerenciadorRecursos {
       Thread.sleep(intervaloMs);
       Processo p = verificarDeadlock();
       if (p != null) {
-        System.out.println("Deadlock detectado! Interrompendo processo " + p.getId());
+        System.out.println("Deadlock detectado! Interrompendo processo " + p.getIdentificador());
         this.desenharGrafo();
 
         this.interromperProcessosEnvolvidos(p);
@@ -41,25 +48,23 @@ public class GerenciadorRecursos {
     }
   }
 
-
   private void interromperProcessosEnvolvidos(NoGrafo no) {
     Set<NoGrafo> nosEnvolvidos = this.trazerNosVizinhos(no, new HashSet<>());
 
     this.interromperVariosProcessos(
-      nosEnvolvidos
-    );
+        nosEnvolvidos);
   }
 
   private Set<NoGrafo> trazerNosVizinhos(NoGrafo no, Set<NoGrafo> visitados) {
-    visitados.add(no);   
+    visitados.add(no);
     for (NoGrafo vizinho : grafo.getOrDefault(no, Collections.emptySet())) {
-      if (visitados.contains(vizinho)) continue;
+      if (visitados.contains(vizinho))
+        continue;
       this.trazerNosVizinhos(vizinho, visitados);
     }
 
     return visitados;
   }
-
 
   private void interromperVariosProcessos(Set<NoGrafo> nos) {
     for (NoGrafo no : nos) {
@@ -110,5 +115,53 @@ public class GerenciadorRecursos {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
+  }
+
+  public boolean iniciarExecucao(Processo p, Conta origem, Conta destino, int tamanhoMb, int ramMb) {
+    System.out.println("chegou aqui 1");
+    try {
+      if (!ram.reservar(ramMb)) {
+        System.out.println("Nao pode reservar RAM: " + p.getIdentificador());
+        return false;
+      }
+      if (!disco.alocar(p.getIdentificador(), tamanhoMb)) {
+        System.out.println("Nao pode alocar disco: " + p.getIdentificador());
+        ram.liberar(ramMb);
+        return false;
+      }
+
+      System.out.println("chegou aqui");
+
+      this.solicitarRecurso(p, origem);
+
+      origem.lock.lockInterruptibly();
+      this.adquirirRecurso(p, origem);
+
+      this.solicitarRecurso(p, destino);
+      destino.lock.lockInterruptibly();
+      this.adquirirRecurso(p, destino);
+
+      return true;
+    } catch (InterruptedException e) {
+      System.out.println(e.getMessage());
+      return false;
+    }
+  }
+
+  public void finalizarExecucao(Processo p, Conta origem, Conta destino, int tamanhoMb, int ramMb) {
+    if (origem.lock.isHeldByCurrentThread()) {
+      origem.lock.unlock();
+      this.liberarRecurso(p, origem);
+    }
+    if (destino.lock.isHeldByCurrentThread()) {
+      destino.lock.unlock();
+      this.liberarRecurso(p, destino);
+    }
+    this.disco.liberar(p.getIdentificador());
+    this.ram.liberar(ramMb);
+  }
+
+  public synchronized void adicionarNo(NoGrafo no) {
+    grafo.putIfAbsent(no, new HashSet<>());
   }
 }
