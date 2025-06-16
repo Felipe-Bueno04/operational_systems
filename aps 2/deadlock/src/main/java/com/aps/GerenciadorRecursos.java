@@ -129,18 +129,19 @@ public class GerenciadorRecursos {
         ram.liberar(ramMb);
         return false;
       }
-
-      System.out.println("chegou aqui");
-
       this.solicitarRecurso(p, origem);
 
+      Thread.sleep(2000);
       origem.lock.lockInterruptibly();
+
       this.adquirirRecurso(p, origem);
+      Thread.sleep(2000);
 
       this.solicitarRecurso(p, destino);
+      Thread.sleep(2000);
+
       destino.lock.lockInterruptibly();
       this.adquirirRecurso(p, destino);
-
       return true;
     } catch (InterruptedException e) {
       System.out.println(e.getMessage());

@@ -26,9 +26,7 @@ public class App {
         ConsoleView console = new ConsoleView();
 
         long fim = System.currentTimeMillis() + tempoExecucao;
-
         while (System.currentTimeMillis() < fim) {
-            System.out.println("oi");
             Processo p = InstanciadorProcessos.criar(contas, gr);
             gr.adicionarNo(p);
             new Thread(p).start();

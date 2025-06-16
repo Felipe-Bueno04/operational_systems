@@ -74,10 +74,24 @@ public class GerenciadorDisco {
   }
 
   public synchronized double getTaxaFragmentacao() {
-    int usados = (int) blocos.stream().filter(b -> b.processoId != null).count();
-    if (usados == 0)
+    Map<String, Integer> segmentosPorProcesso = new HashMap<>();
+    String processoAnterior = null;
+
+    for (Bloco bloco : blocos) {
+      String atual = bloco.processoId;
+      if (atual != null && !atual.equals(processoAnterior)) {
+        segmentosPorProcesso.put(atual, segmentosPorProcesso.getOrDefault(atual, 0) + 1);
+      }
+      processoAnterior = atual;
+    }
+
+    int totalSegmentos = segmentosPorProcesso.values().stream().mapToInt(Integer::intValue).sum();
+    int totalProcessos = segmentosPorProcesso.size();
+
+    if (totalSegmentos == 0)
       return 0;
-    return (double) getTamanhoFragmentado() / usados;
+
+    return (double) (totalSegmentos - totalProcessos) / totalSegmentos;
   }
 
   public synchronized void desfragmentar(int mb) {
